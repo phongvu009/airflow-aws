@@ -108,5 +108,7 @@ def sparkify_pipeline():
     start_operator >> create_events_table >> stage_events_to_redshift 
     start_operator >> create_songs_table >> stage_songs_to_redshift 
     
-    start_operator >> create_user_dim_table >> load_user_dimension_table >> user_dim_quality_checks
+    start_operator >> create_user_dim_table
+    stage_events_to_redshift >> load_user_dimension_table >> user_dim_quality_checks
+    
 sparkify_pipeline_dag=sparkify_pipeline()
