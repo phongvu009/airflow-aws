@@ -15,9 +15,10 @@ from airflow.operators.postgres_operator import PostgresOperator
 from sql_commands.sql_queries import SqlQueries
 from sql_commands import create_tables
 @dag(
-    
+    owner='phongvu',
     start_date = pendulum.now(),
-    schedule_interval=timedelta(minutes=5),
+    schedule_interval='@hourly',
+    retry_delay=timedelta(minutes=5),
     catchup=False,
 )
 def sparkify_pipeline():
