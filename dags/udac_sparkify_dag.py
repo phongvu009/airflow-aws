@@ -3,29 +3,48 @@ import pendulum
 
 from airflow.decorators import dag,task
 from airflow.operators.dummy_operator import DummyOperator 
-
+from datetime import timedelta
 
 from custom_operators.stage_redshift import StageToRedshiftOperator
 from custom_operators.load_fact import LoadFactOperator
 from custom_operators.load_dimension import LoadDimensionOperator
 from custom_operators.data_quality import DataQualityOperator
 
+from airflow.operators.postgres_operator import PostgresOperator 
 
 from sql_commands.sql_queries import SqlQueries
-
+from sql_commands import create_tables
 @dag(
-    start_date = pendulum.now()
+    
+    start_date = pendulum.now(),
+    schedule_interval=timedelta(minutes=5),
+    catchup=False,
 )
 def sparkify_pipeline():
     
     start_operator = DummyOperator(
         task_id="Begin_execution"
     )
-    #Load Data to redshift
+    
+    #Load Data from S3 to redshift
+    create_events_table = PostgresOperator(
+        task_id='create_events_table',
+        postgres_conn_id="sparkify_redshift",
+        sql=create_tables.CREATE_EVENTS_TABLE_SQL
+    )
+    
     stage_events_to_redshift = StageToRedshiftOperator(
-        task_id='Stage_events'
+        task_id='Stage_events',
+        aws_credentials_id="aws_credentials",
+        redshift_conn_id="sparkify_redshift",
+        table="staging_events",
+        s3_bucket="sparkify-proj",
+        s3_key="log_data"
     )
 
+    create_songs_table = PostgresOperator(
+        task_id="create_songs_table"
+    )
     stage_songs_to_redshift = StageToRedshiftOperator(
         task_id="Stage_songs"
     )
