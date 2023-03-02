@@ -42,12 +42,12 @@ def sparkify_pipeline():
         s3_key="log_data"
     )
 
-    create_songs_table = PostgresOperator(
-        task_id="create_songs_table"
-    )
-    stage_songs_to_redshift = StageToRedshiftOperator(
-        task_id="Stage_songs"
-    )
+    # create_songs_table = PostgresOperator(
+    #     task_id="create_songs_table"
+    # )
+    # stage_songs_to_redshift = StageToRedshiftOperator(
+    #     task_id="Stage_songs"
+    # )
     #load fact tables
     load_songplays_table = LoadFactOperator(
         task_id="Load_songplays_fact_table"
@@ -67,12 +67,16 @@ def sparkify_pipeline():
     )
 
     #data quality
-    run_quality_checks = DataQualityOperator(
-        task_id="Run_data_quality_checks",
+    stage_events_quality_checks = DataQualityOperator(
+        task_id="Run_data_quality_checks_on_stage_events",
+        redshift_conn_id = "sparkify_redshift",
+        table="stage_events"
     )
 
     end_operator = DummyOperator(
         task_id="Stop_execution"
     )
+    
+    start_operator >> create_events_table >> stage_events_to_redshift >> stage_events_quality_checks
 
 sparkify_pipeline_dag=sparkify_pipeline()
