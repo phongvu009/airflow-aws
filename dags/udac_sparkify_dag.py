@@ -11,7 +11,7 @@ from custom_operators.load_dimension import LoadDimensionOperator
 from custom_operators.data_quality import DataQualityOperator
 
 
-from helpers import SqlQueries 
+from sql_commands.sql_queries import SqlQueries
 
 @dag(
     start_date = pendulum.now()
