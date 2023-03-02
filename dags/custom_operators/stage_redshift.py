@@ -5,10 +5,9 @@ from airflow.utils.decorators import apply_defaults
 
 
 class StageToRedshiftOperator(BaseOperator):
-    ui_color = '#358140'
-    template_fields = ("s3_key")
+    ui_color = '#358140' 
     copy_sql = """
-        COPY{}
+        COPY {}
         FROM '{}'
         ACCESS_KEY_ID '{}'
         SECRET_ACCESS_KEY '{}'
@@ -31,11 +30,11 @@ class StageToRedshiftOperator(BaseOperator):
         self.redshift_conn_id = redshift_conn_id
         self.table = table
         self.s3_bucket = s3_bucket
-        self.key = s3_key
+        self.s3_key = s3_key
         self.json_format = json_format
     
     def execute(self,context):
-        metastoreBackend = MetaStoreBackend()
+        metastoreBackend = MetastoreBackend()
         aws_connection = metastoreBackend.get_connection(self.aws_credentials_id)
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
 
