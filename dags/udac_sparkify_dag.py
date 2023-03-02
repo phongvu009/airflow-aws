@@ -15,10 +15,9 @@ from airflow.operators.postgres_operator import PostgresOperator
 from sql_commands.sql_queries import SqlQueries
 from sql_commands import create_tables
 @dag(
-    owner='phongvu',
+    
     start_date = pendulum.now(),
     schedule_interval='@hourly',
-    retry_delay=timedelta(minutes=5),
     catchup=False,
 )
 def sparkify_pipeline():
@@ -31,7 +30,7 @@ def sparkify_pipeline():
     create_events_table = PostgresOperator(
         task_id='create_events_table',
         postgres_conn_id="sparkify_redshift",
-        sql=create_tables.CREATE_EVENTS_TABLE_SQL
+        sql=create_tables.CREATE_STAGING_EVENTS_TABLE_SQL
     )
     
     stage_events_to_redshift = StageToRedshiftOperator(
@@ -46,7 +45,7 @@ def sparkify_pipeline():
     create_songs_table = PostgresOperator(
         task_id="create_songs_table",
         postgres_conn_id="sparkify_redshift",
-        sql=create_tables.CREATE_SONGS_TABLE_SQL
+        sql=create_tables.CREATE_STAGING_SONGS_TABLE_SQL
     )
     stage_songs_to_redshift = StageToRedshiftOperator(
         task_id="Stage_songs",
@@ -57,22 +56,30 @@ def sparkify_pipeline():
         s3_key = "song_data"
     )
     # load fact tables
-    load_songplays_table = LoadFactOperator(
-        task_id="Load_songplays_fact_table"
-    )
+    # load_songplays_table = LoadFactOperator(
+    #     task_id="Load_songplays_fact_table"
+    # )
     #Load dimension tables
+    create_user_dim_table = PostgresOperator(
+        task_id="create_user_dim_table",
+        postgres_conn_id="sparkify_redshift",
+        sql = create_tables.CREATE_DIM_USERS_TABLE_SQL
+    )
     load_user_dimension_table = LoadDimensionOperator(
-        task_id="Load_user_dim_table"
+        task_id="Load_user_dim_table",
+        redshift_conn_id = "sparkify_redshift",
+        table = "dim_users",
+        sql_query= SqlQueries.user_table_insert
     )
-    load_song_dimension_table = LoadDimensionOperator(
-        task_id="Load_song_dim_table"
-    )
-    load_artist_dimension_table = LoadDimensionOperator(
-        task_id="Load_artist_dim_table"
-    )
-    load_time_dimension_table = LoadDimensionOperator(
-        task_id="Load_time_dim_table"
-    )
+    # load_song_dimension_table = LoadDimensionOperator(
+    #     task_id="Load_song_dim_table"
+    # )
+    # load_artist_dimension_table = LoadDimensionOperator(
+    #     task_id="Load_artist_dim_table"
+    # )
+    # load_time_dimension_table = LoadDimensionOperator(
+    #     task_id="Load_time_dim_table"
+    # )
 
     #data quality
     stage_events_quality_checks = DataQualityOperator(
@@ -87,6 +94,12 @@ def sparkify_pipeline():
         redshift_conn_id = "sparkify_redshift",
         table="staging_songs"
     )
+    
+    user_dim_quality_checks = DataQualityOperator(
+        task_id = "Data_quality_check_on_user_dim",
+        redshift_conn_id="sparkify_redshift",
+        table="dim_users"
+    )
 
     end_operator = DummyOperator(
         task_id="Stop_execution"
@@ -94,4 +107,6 @@ def sparkify_pipeline():
     
     start_operator >> create_events_table >> stage_events_to_redshift >> stage_events_quality_checks
     start_operator >> create_songs_table >> stage_songs_to_redshift >> stage_songs_quality_checks
+    
+    start_operator >> create_user_dim_table >> load_user_dimension_table >> user_dim_quality_checks
 sparkify_pipeline_dag=sparkify_pipeline()
