@@ -58,3 +58,13 @@ CREATE_DIM_SONGS_TABLE_SQL = """
         CONSTRAINT      songs_key PRIMARY KEY (songid)
     )
 """
+
+CREATE_DIM_ARTISTS_TABLE_SQL = """
+    CREATE TABLE IF NOT EXISTS dim_artists(
+        artistid        varchar(256) NOT NULL,
+        name            varchar(256),
+        location        varchar(256),
+        lattitude       numeric(18,0),
+        longitude       numeric(18,0)
+    )
+"""
