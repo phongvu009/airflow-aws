@@ -5,7 +5,8 @@ from airflow.utils.decorators import apply_defaults
 
 class LoadFactOperator(BaseOperator):
     insert_sql_template = """
-         INSERT INTO {table} ({sql_query})
+        TRUNCATE TABLE {table};
+        INSERT INTO {table} ({sql_query})
     """
     @apply_defaults
     def __init__(self,

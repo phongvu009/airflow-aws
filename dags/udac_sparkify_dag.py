@@ -152,6 +152,11 @@ def sparkify_pipeline():
         table="dim_artists"
     )
 
+    time_dim_quality_checks = DataQualityOperator(
+        task_id = "Data_quality_check_on_time_dim",
+        redshift_conn_id = "sparkify_redshift",
+        table="dim_time"
+    )
     
     songplays_fact_quality_checks = DataQualityOperator(
         task_id = "Data_quality_check_on_songplays_fact",
@@ -168,7 +173,7 @@ def sparkify_pipeline():
     start_operator >> create_songplays_fact_table >> load_songplays_fact_table >> songplays_fact_quality_checks
     
     start_operator >> create_time_dim_table
-    load_songplays_fact_table >> load_time_dimension_table 
+    load_songplays_fact_table >> load_time_dimension_table >> time_dim_quality_checks
     
     start_operator >> create_users_dim_table
     stage_events_to_redshift >> load_users_dimension_table >> users_dim_quality_checks
