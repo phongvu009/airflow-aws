@@ -28,7 +28,7 @@ def sparkify_pipeline():
     
     #Load Data from S3 to redshift
     create_events_table = PostgresOperator(
-        task_id='create_events_table',
+        task_id='create_staging_events_table',
         postgres_conn_id="sparkify_redshift",
         sql=create_tables.CREATE_STAGING_EVENTS_TABLE_SQL
     )
@@ -45,7 +45,7 @@ def sparkify_pipeline():
     )
 
     create_songs_table = PostgresOperator(
-        task_id="create_songs_table",
+        task_id="create_staging_songs_table",
         postgres_conn_id="sparkify_redshift",
         sql=create_tables.CREATE_STAGING_SONGS_TABLE_SQL
     )
@@ -99,20 +99,29 @@ def sparkify_pipeline():
         table="dim_artists",
         sql_query= SqlQueries.artist_table_insert
     )
-    # load_time_dimension_table = LoadDimensionOperator(
-    #     task_id="Load_time_dim_table"
-    # )
+    
+    create_time_dim_table = PostgresOperator(
+        task_id= "create_time_dim_table",
+        postgres_conn_id = "sparkify_redshift",
+        sql = create_tables.CREATE_DIM_TIME_TABLE_SQL
+    )
+    load_time_dimension_table = LoadDimensionOperator(
+        task_id="Load_time_dim_table",
+        redshift_conn_id = "sparkify_redshift",
+        table="dim_time",
+        sql_query= SqlQueries.time_table_insert
+    )
 
     #data quality
     stage_events_quality_checks = DataQualityOperator(
-        task_id="Data_quality_checks_on_stage_events",
+        task_id="Data_quality_checks_on_staging_events",
         redshift_conn_id = "sparkify_redshift",
         table="staging_events"
        
     )
     
     stage_songs_quality_checks = DataQualityOperator(
-        task_id="Data_quality_check_on_stage_songs",
+        task_id="Data_quality_check_on_staging_songs",
         redshift_conn_id = "sparkify_redshift",
         table="staging_songs"
     )

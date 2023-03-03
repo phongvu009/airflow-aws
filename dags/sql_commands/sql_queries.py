@@ -14,3 +14,14 @@ class SqlQueries:
         SELECT  distinct artist_id, artist_name, artist_location, artist_latitude, artist_longitude
         FROM staging_songs
                            """)
+    
+    time_table_insert = ("""
+        SELECT distinct start_time,
+                        extract(hour from start_time),
+                        extract(day from start_time),
+                        extract(week from start_time),
+                        extract(month from start_time),
+                        extract(year from start_time),
+                        extract(dayofweek from start_time)
+        FROM songplays
+                         """)
