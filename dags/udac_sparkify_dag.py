@@ -59,9 +59,17 @@ def sparkify_pipeline():
         region = "us-east-1",
     )
     # load fact tables
-    # load_songplays_table = LoadFactOperator(
-    #     task_id="Load_songplays_fact_table"
-    # )
+    create_songplays_fact_table = PostgresOperator(
+        task_id = "create_songplays_fact_table",
+        postgres_conn_id="sparkify_redshift",
+        sql= create_tables.CREATE_FACT_SONGPLAYS_TABLE_SQL
+    )
+    load_songplays_fact_table = LoadFactOperator(
+        task_id="Load_songplays_fact_table",
+        redshift_conn_id = "sparkify_redshift",
+        table="fact_songplays",
+        sql_query= SqlQueries.songplay_table_insert
+    )
     #Load dimension tables
     create_users_dim_table = PostgresOperator(
         task_id="create_users_dim_table",
@@ -143,12 +151,24 @@ def sparkify_pipeline():
         redshift_conn_id="sparkify_redshift",
         table="dim_artists"
     )
+
+    
+    songplays_fact_quality_checks = DataQualityOperator(
+        task_id = "Data_quality_check_on_songplays_fact",
+        redshift_conn_id = "sparkify_redshift",
+        table="fact_songplays"
+    )
     end_operator = DummyOperator(
         task_id="Stop_execution"
     )
     
     start_operator >> create_events_table >> stage_events_to_redshift >> stage_events_quality_checks
     start_operator >> create_songs_table >> stage_songs_to_redshift >> stage_songs_quality_checks
+    
+    start_operator >> create_songplays_fact_table >> load_songplays_fact_table >> songplays_fact_quality_checks
+    
+    start_operator >> create_time_dim_table
+    load_songplays_fact_table >> load_time_dimension_table 
     
     start_operator >> create_users_dim_table
     stage_events_to_redshift >> load_users_dimension_table >> users_dim_quality_checks

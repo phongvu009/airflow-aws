@@ -37,6 +37,21 @@ CREATE_STAGING_SONGS_TABLE_SQL = """
     )
 """
 
+CREATE_FACT_SONGPLAYS_TABLE_SQL = """
+    CREATE TABLE IF NOT EXISTS fact_songplays(
+        playid          varchar(32) NOT NULL,
+        start_time      timestamp   NOT NULL,
+        userid          int4        NOT NULL,
+        "level"         varchar(256),
+        songid          varchar(256),
+        artistid        varchar(256),
+        sessionid       int4,
+        location        varchar(256),
+        user_agent      varchar(256),
+        CONSTRAINT   songplays_pkey PRIMARY KEY (playid)
+    )
+"""
+
 CREATE_DIM_USERS_TABLE_SQL = """
     CREATE TABLE IF NOT EXISTS dim_users(
         userid          int4 NOT NULL,
