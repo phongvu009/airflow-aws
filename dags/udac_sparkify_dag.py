@@ -38,8 +38,10 @@ def sparkify_pipeline():
         aws_credentials_id="aws_credentials",
         redshift_conn_id="sparkify_redshift",
         table="staging_events",
-        s3_bucket="sparkify-proj",
-        s3_key="log_data"
+        s3_bucket="udacity-dend",
+        s3_key="log_data",
+        region = "us-west-2",
+        json_format='s3://udacity-dend/log_json_path.json'
     )
 
     create_songs_table = PostgresOperator(
@@ -53,7 +55,8 @@ def sparkify_pipeline():
         redshift_conn_id = "sparkify_redshift",
         table = "staging_songs",
         s3_bucket = "sparkify-proj",
-        s3_key = "song_data"
+        s3_key = "song_data",
+        region = "us-east-1",
     )
     # load fact tables
     # load_songplays_table = LoadFactOperator(
@@ -71,9 +74,18 @@ def sparkify_pipeline():
         table = "dim_users",
         sql_query= SqlQueries.user_table_insert
     )
-    # load_song_dimension_table = LoadDimensionOperator(
-    #     task_id="Load_song_dim_table"
-    # )
+
+    create_song_dim_table = PostgresOperator(
+        task_id="create_song_dim_table",
+        postgres_conn_id="sparkify_redshift",
+        sql = create_tables.CREATE_DIM_SONGS_TABLE_SQL
+    )
+    load_song_dimension_table = LoadDimensionOperator(
+        task_id="Load_song_dim_table",
+        redshift_conn_id = "sparkify_redshift",
+        table= "dim_songs",
+        sql_query = SqlQueries.song_table_insert
+    )
     # load_artist_dimension_table = LoadDimensionOperator(
     #     task_id="Load_artist_dim_table"
     # )
@@ -101,14 +113,21 @@ def sparkify_pipeline():
         table="dim_users"
     )
 
+    song_dim_quality_checks = DataQualityOperator(
+        task_id = "Data_quality_check_on_song_dim",
+        redshift_conn_id="sparkify_redshift",
+        table="dim_songs"
+    )
     end_operator = DummyOperator(
         task_id="Stop_execution"
     )
     
-    start_operator >> create_events_table >> stage_events_to_redshift 
-    start_operator >> create_songs_table >> stage_songs_to_redshift 
+    start_operator >> create_events_table >> stage_events_to_redshift >> stage_events_quality_checks
+    start_operator >> create_songs_table >> stage_songs_to_redshift >> stage_songs_quality_checks
     
     start_operator >> create_user_dim_table
     stage_events_to_redshift >> load_user_dimension_table >> user_dim_quality_checks
     
+    start_operator >> create_song_dim_table
+    stage_songs_to_redshift >> load_song_dimension_table >>  song_dim_quality_checks
 sparkify_pipeline_dag=sparkify_pipeline()

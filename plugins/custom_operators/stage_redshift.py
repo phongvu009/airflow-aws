@@ -34,7 +34,7 @@ class StageToRedshiftOperator(BaseOperator):
         self.json_format = json_format
     
     def execute(self,context):
-        metastoreBackend = MetaStoreBackend()
+        metastoreBackend = MetastoreBackend()
         aws_connection = metastoreBackend.get_connection(self.aws_credentials_id)
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
 

@@ -47,3 +47,14 @@ CREATE_DIM_USERS_TABLE_SQL = """
         CONSTRAINT users_pkey PRIMARY KEY (userid)
     )
 """
+
+CREATE_DIM_SONGS_TABLE_SQL = """
+    CREATE TABLE IF NOT EXISTS dim_songs(
+        songid          varchar(256) NOT NULL,
+        title           varchar(256),
+        artistid        varchar(256),
+        "year"          int4,
+        duration        numeric(18,0),
+        CONSTRAINT      songs_key PRIMARY KEY (songid)
+    )
+"""
