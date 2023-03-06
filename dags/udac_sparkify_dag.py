@@ -1,5 +1,6 @@
 import os
 import pendulum
+from pendulum  import datetime, duration
 
 from airflow.decorators import dag,task
 from airflow.operators.dummy_operator import DummyOperator 
@@ -14,11 +15,19 @@ from airflow.operators.postgres_operator import PostgresOperator
 
 from sql_commands.sql_queries import SqlQueries
 from sql_commands import create_tables
+
+default_args = {
+    "owner":"udacity",
+    "depens_on_past":False,
+    "email_on_failure":False,
+    "retires":1,
+    "retry_delay": duration(minutes=1),
+    "catchup":False,
+}
 @dag(
-    
     start_date = pendulum.now(),
     schedule_interval='@hourly',
-    catchup=False,
+    default_args = default_args
 )
 def sparkify_pipeline():
     
@@ -121,68 +130,31 @@ def sparkify_pipeline():
     )
 
     #data quality
-    stage_events_quality_checks = DataQualityOperator(
-        task_id="Data_quality_checks_on_staging_events",
-        redshift_conn_id = "sparkify_redshift",
-        table="staging_events"
-       
-    )
-    
-    stage_songs_quality_checks = DataQualityOperator(
-        task_id="Data_quality_check_on_staging_songs",
-        redshift_conn_id = "sparkify_redshift",
-        table="staging_songs"
-    )
-    
-    users_dim_quality_checks = DataQualityOperator(
-        task_id = "Data_quality_check_on_users_dim",
-        redshift_conn_id="sparkify_redshift",
-        table="dim_users"
-    )
-
-    songs_dim_quality_checks = DataQualityOperator(
-        task_id = "Data_quality_check_on_songs_dim",
-        redshift_conn_id="sparkify_redshift",
-        table="dim_songs"
-    )
-    
-    artists_dim_quality_checks = DataQualityOperator(
-        task_id = "Data_quality_check_on_artists_dim",
-        redshift_conn_id="sparkify_redshift",
-        table="dim_artists"
-    )
-
-    time_dim_quality_checks = DataQualityOperator(
-        task_id = "Data_quality_check_on_time_dim",
-        redshift_conn_id = "sparkify_redshift",
-        table="dim_time"
-    )
-    
-    songplays_fact_quality_checks = DataQualityOperator(
-        task_id = "Data_quality_check_on_songplays_fact",
-        redshift_conn_id = "sparkify_redshift",
-        table="fact_songplays"
+    data_quality_checks = DataQualityOperator(
+        task_id="Data_quality_check",
+        redshift_conn_id= "sparkify_redshift",
+        tables=["dim_users","dim_songs","dim_artists","dim_time"]
     )
     end_operator = DummyOperator(
         task_id="Stop_execution"
     )
     
-    start_operator >> create_events_table >> stage_events_to_redshift >> stage_events_quality_checks
-    start_operator >> create_songs_table >> stage_songs_to_redshift >> stage_songs_quality_checks
+    start_operator >> create_events_table >> stage_events_to_redshift
+    start_operator >> create_songs_table >> stage_songs_to_redshift 
     
-    start_operator >> create_songplays_fact_table >> load_songplays_fact_table >> songplays_fact_quality_checks
+    start_operator >> create_songplays_fact_table >> [stage_events_to_redshift, stage_songs_to_redshift] >> load_songplays_fact_table 
     
     start_operator >> create_time_dim_table
-    load_songplays_fact_table >> load_time_dimension_table >> time_dim_quality_checks
+    load_songplays_fact_table >> load_time_dimension_table >> data_quality_checks >> end_operator
     
     start_operator >> create_users_dim_table
-    stage_events_to_redshift >> load_users_dimension_table >> users_dim_quality_checks
+    stage_events_to_redshift >> load_users_dimension_table >> data_quality_checks >> end_operator
     
     start_operator >> create_songs_dim_table
-    stage_songs_to_redshift >> load_songs_dimension_table >>  songs_dim_quality_checks
+    stage_songs_to_redshift >> load_songs_dimension_table >>  data_quality_checks >> end_operator
 
     start_operator >> create_artists_dim_table 
-    stage_songs_to_redshift >> load_artist_dimension_table >> artists_dim_quality_checks
+    stage_songs_to_redshift >> load_artist_dimension_table >> data_quality_checks >> end_operator
     
     
 sparkify_pipeline_dag=sparkify_pipeline()
