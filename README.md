@@ -17,9 +17,9 @@ The project is applying Apache Airflow to build a automatic ETL process runs hou
 Datasets
 ===============
 For this project, you'll be working with two datasets. Here are the s3 links for each:
+- Log data: s3://udacity-dend/log_data
+- Song data: s3://udacity-dend/song_data
 
-Log data: s3://udacity-dend/log_data
-Song data: s3://udacity-dend/song_data
 Project Files content
 ================
 dags/udac_sparkify_dag.py : the main file to start
