@@ -1,20 +1,30 @@
+Welcome to Sparkify project
+
+Introduction
+================
+A music streaming company, Sparkify, has decided that it is time to introduce more automation and monitoring to their data warehouse ETL pipelines and come to the conclusion that the best tool to achieve this is Apache Airflow.
+
+They have decided to bring you into the project and expect you to create high grade data pipelines that are dynamic and built from reusable tasks, can be monitored, and allow easy backfills. They have also noted that the data quality plays a big part when analyses are executed on top the data warehouse and want to run tests against their datasets after the ETL steps have been executed to catch any discrepancies in the datasets.
+
+The source data resides in S3 and needs to be processed in Sparkify's data warehouse in Amazon Redshift. The source datasets consist of JSON logs that tell about user activity in the application and JSON metadata about the songs the users listen to.
+
 Overview
-========
-
-Welcome to Big P !
-
-Project Contents
 ================
 
-The project contains the following files and folders:
+The project is applying Apache Airflow to build a automatic ETL process runs hourly as shown as below:
+![Work Flow](images/work_flow_dag.png)
 
-- dags: This folder contains the Python files for your Airflow DAGs. By default, this directory includes an example DAG that runs every 30 minutes and simply prints the current date. It also includes an empty 'my_custom_function' that you can fill out to execute Python code.
-- Dockerfile: This file contains a versioned Astro Runtime Docker image that provides a differentiated Airflow experience. If you want to execute other commands or overrides at runtime, specify them here.
-- include: This folder contains any additional files that you want to include as part of your project. It is empty by default.
-- packages.txt: Install OS-level packages needed for your project by adding them to this file. It is empty by default.
-- requirements.txt: Install Python packages needed for your project by adding them to this file. It is empty by default.
-- plugins: Add custom or community plugins for your project to this file. It is empty by default.
-- airflow_settings.yaml: Use this local-only file to specify Airflow Connections, Variables, and Pools instead of entering them in the Airflow UI as you develop DAGs in this project.
+Datasets
+===============
+For this project, you'll be working with two datasets. Here are the s3 links for each:
+
+Log data: s3://udacity-dend/log_data
+Song data: s3://udacity-dend/song_data
+Project Files content
+================
+dags/udac_sparkify_dag.py : the main file to start
+dags/sql_commands: contails SQL scripts to manage tables
+plugins/custom_operators: contains DAG custom operator
 
 Deploy Your Project Locally
 ===========================
