@@ -21,7 +21,7 @@ class DataQualityOperator(BaseOperator):
 
         self.log.info("Testing begins")
         for i,dq_check in enumerate(self.dq_checks) :
-            records = redshift.get_records[dq_check["test_sql"]]
+            records = redshift.get_records(dq_check["test_sql"])
             result = records[0][0]
             if dq_check['op'] == "=":
                 if result != dq_check['expected_result'] :
