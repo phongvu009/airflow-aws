@@ -39,9 +39,11 @@ class StageToRedshiftOperator(BaseOperator):
     def execute(self,context):
         metastoreBackend = MetastoreBackend()
         aws_connection = metastoreBackend.get_connection(self.aws_credentials_id)
+        self.log.info("Connecting to redshift")
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
+        self.log.info("Connected to redshift")
 
-        self.log.info("New Run ---> Clearing data from destination Redshift table")
+        self.log.info("Stating the porocess on loading data into Amazon Redshift ")
         redshift.run("DELETE FROM {}".format(self.table))
 
         self.log.info("Copying data from S3 to Redshift")
@@ -56,3 +58,4 @@ class StageToRedshiftOperator(BaseOperator):
             self.json_format
         )
         redshift.run(formatted_sql)
+        self.log.info("the query run sucessfully") 

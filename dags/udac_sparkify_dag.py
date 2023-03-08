@@ -20,12 +20,12 @@ default_args = {
     "owner":"udacity",
     "depens_on_past":False,
     "email_on_failure":False,
-    "retires":1,
-    "retry_delay": duration(minutes=1),
+    "retries":3,
+    "retry_delay": duration(minutes=5),
     "catchup":False,
 }
 @dag(
-    start_date = pendulum.now(),
+    start_date = pendulum.datetime(2023,1,1),
     schedule_interval='@hourly',
     default_args = default_args
 )

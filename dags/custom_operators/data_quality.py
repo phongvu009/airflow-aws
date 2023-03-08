@@ -15,7 +15,9 @@ class DataQualityOperator(BaseOperator):
         
 
     def execute(self,context):
+        self.log.info("Connecting to redshift")
         redshift = PostgresHook(self.redshift_conn_id)
+        self.log.info("Connected to redshift")
         if not self.tables:
             raise ValueError(f"this can not be empty")
         for self.check_table in self.tables:

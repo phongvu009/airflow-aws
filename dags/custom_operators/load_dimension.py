@@ -5,7 +5,6 @@ from airflow.utils.decorators import apply_defaults
 class LoadDimensionOperator(BaseOperator):
     ui_color = '#80BD9E'
     insert_sql_template = """
-        TRUNCATE TABLE {table};
         INSERT INTO {table} ({sql_query})
     """
     
@@ -14,18 +13,31 @@ class LoadDimensionOperator(BaseOperator):
                  redshift_conn_id="",
                  table="",
                  sql_query="",
+                 append_only = False,
                  *args,**kwargs
                  ):
         super(LoadDimensionOperator,self).__init__(*args,**kwargs)
         self.redshift_conn_id = redshift_conn_id
         self.table = table
         self.sql_query = sql_query
+        self.append_only = append_only
     
     def execute(self,context):
+        self.log.info("Connecting to redshift")
         redshift = PostgresHook(self.redshift_conn_id)
-        insert_sql = LoadDimensionOperator.insert_sql_template.format(
-            table=self.table,
-            sql_query=self.sql_query
-        )
-        #remove all records before doing insert. This help to remove duplicate data
-        redshift.run(insert_sql)
+        self.log.info("Connected to redshift")
+        if not self.append_only:
+            redshift.run(" TRUNCATE TABLE {self.table}")
+            insert_sql = LoadDimensionOperator.insert_sql_template.format(
+                table=self.table,
+                sql_query=self.sql_query
+            )
+            redshift.run(insert_sql)           
+        else:
+            insert_sql = LoadDimensionOperator.insert_sql_template.format(
+                table=self.table,
+                sql_query=self.sql_query
+            )
+            redshift.run(insert_sql)
+        self.log.info("Succes on running the insert query")
+
