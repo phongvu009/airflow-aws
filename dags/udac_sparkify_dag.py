@@ -133,7 +133,11 @@ def sparkify_pipeline():
     data_quality_checks = DataQualityOperator(
         task_id="Data_quality_check",
         redshift_conn_id= "sparkify_redshift",
-        tables=["dim_users","dim_songs","dim_artists","dim_time"]
+        dq_checks=[{'test_sql': 'SELECT COUNT(*) FROM dim_users', 'expected_result':0 , 'op': '>'},
+                {'test_sql': 'SELECT COUNT(*) FROM dim_songs', 'expected_result':0 , 'op':'>'},
+                {'test_sql': 'SELECT COUNT(*) FROM dim_artists', 'expected_result':0 , 'op':'>'},
+                {'test_sql': 'SELECT COUNT(*) FROM dim_time', 'expected_result':0 , 'op':'>'}
+                ]
     )
     end_operator = DummyOperator(
         task_id="Stop_execution"

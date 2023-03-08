@@ -27,7 +27,7 @@ class LoadDimensionOperator(BaseOperator):
         redshift = PostgresHook(self.redshift_conn_id)
         self.log.info("Connected to redshift")
         if not self.append_only:
-            redshift.run(" TRUNCATE TABLE {self.table}")
+            redshift.run(f"TRUNCATE TABLE {self.table}")
             insert_sql = LoadDimensionOperator.insert_sql_template.format(
                 table=self.table,
                 sql_query=self.sql_query
